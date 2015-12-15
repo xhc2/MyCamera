@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <FrameLayout
+        android:id="@+id/camera_preview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1" />
+
+    <RelativeLayout
+        android:layout_width="70dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:background="#33000000">
+
+        <ImageButton
+            android:id="@+id/button_capture"
+            android:layout_width="52.3dp"
+            android:layout_height="52.3dp"
+            android:layout_centerInParent="true"
+            android:layout_centerVertical="true"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/start" />
+
+        <ImageButton
+            android:id="@+id/img_album"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/gallery_default" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="60dp"
+        android:layout_height="match_parent"
+        android:background="#33000000">
+
+        <ImageButton
+            android:id="@+id/camera_change"
+            android:layout_width="53dp"
+            android:layout_height="53dp"
+            android:layout_centerHorizontal="true"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/camera_change" />
+
+        <TextView
+            android:id="@+id/tvtime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:text="00:12"
+            android:textColor="#ffffff"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/img_red"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_below="@id/tvtime"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:src="@drawable/red_shape" />
+
+        <ImageButton
+            android:id="@+id/button_back"
+            android:layout_width="53dp"
+            android:layout_height="53dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/icon_navi_close" />
+    </RelativeLayout>
+</RelativeLayout>
