@@ -16,6 +16,7 @@ public class PlayVideoActivity extends AppCompatActivity {
     private MyVideoView videoView;
     private String path;
 //    private Button bt;
+    //提交点东西
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
