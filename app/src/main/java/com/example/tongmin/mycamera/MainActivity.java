@@ -1,6 +1,7 @@
 package com.example.tongmin.mycamera;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
@@ -8,10 +9,17 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -34,9 +42,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private FrameLayout preview;
     private boolean isRecording = false;
     private Camera.Parameters params;
-    private TextView tvtime;
-    private ImageButton changeCamera, imgAlbum , imgRecord , imgBack;
+    private TextView tvTime;
+    private ImageButton changeCamera, imgAlbum, imgRecord, imgBack;
     private ImageView imgRedPoint;
+    private AlphaAnimation alpha;
+    //默认前置 记录当前的方向
+    private int nowCameraDirection = Camera.CameraInfo.CAMERA_FACING_FRONT;
+    private TimeThread timeThread;
+    private long startTime;
+    private SimpleDateFormat sdf = new SimpleDateFormat("mm:ss");
+    private MyHandler handler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,40 +61,78 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         findViewById();
         initView();
-
-
-
-
     }
 
-    private void startOrStopRecrod(){
+    private void startOrStopRecrod() {
 
         if (isRecording) {
-            // stop recording and release camera
-            mediaRecorder.stop();  // stop the recording
-            releaseMediaRecorder(); // release the MediaRecorder object
-            mCamera.lock();         // take camera access back from MediaRecorder
-            imgRecord.setImageResource(R.drawable.start);
-            // inform the user that recording has stopped
-            isRecording = false;
-            
+            stopRecord();
         } else {
-            // initialize video camera
-            if (prepareVideoRecorder()) {
-                // Camera is available and unlocked, MediaRecorder is prepared,
-                // now you can start recording
-                mediaRecorder.start();
-                imgRecord.setImageResource(R.drawable.stop);
-                // inform the user that recording has started
-//                        setCaptureButtonText("Stop");
-                isRecording = true;
-            } else {
-                // prepare didn't work, release the camera
-                releaseMediaRecorder();
-                // inform user
+            startRecord();
+        }
+    }
+
+    private void startRedPointAnimationAndTime() {
+        alpha = new AlphaAnimation(1.0f, 0f);
+        alpha.setDuration(1000);
+        alpha.setRepeatCount(-1);
+        alpha.setRepeatMode(Animation.REVERSE);
+        imgRedPoint.startAnimation(alpha);
+        timeThread = new TimeThread();
+        timeThread.start();
+        startTime = System.currentTimeMillis();
+    }
+
+    static class MyHandler extends Handler {
+        TextView tv;
+        MyHandler( TextView tv){
+            this.tv = tv;
+        }
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                tv.setText(msg.obj.toString());
             }
         }
     }
+
+    private void stopRecord() {
+        // stop recording and release camera
+        try {
+            //当刚start的时候就stop还没有录到数据就会报异常
+            mediaRecorder.stop();  // stop the recording
+            imgRedPoint.clearAnimation();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "没有数据就停止", Toast.LENGTH_SHORT).show();
+        }
+
+        releaseMediaRecorder(); // release the MediaRecorder object
+        mCamera.lock();         // take camera access back from MediaRecorder
+        imgRecord.setImageResource(R.drawable.start);
+        // inform the user that recording has stopped
+        isRecording = false;
+        changeCamera.setVisibility(View.VISIBLE);
+    }
+
+    private void startRecord() {
+        if (prepareVideoRecorder()) {
+            startRedPointAnimationAndTime();
+            mediaRecorder.start();
+            imgRecord.setImageResource(R.drawable.stop);
+            isRecording = true;
+            changeCamera.setVisibility(View.GONE);
+        } else {
+            Toast.makeText(MainActivity.this, "here????", Toast.LENGTH_SHORT).show();
+            // prepare didn't work, release the camera
+            releaseMediaRecorder();
+            isRecording = false;
+            changeCamera.setVisibility(View.VISIBLE);
+            // inform user
+        }
+    }
+
 
     private void initView() {
         if (!checkCameraHardware(this)) {
@@ -87,17 +140,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             finish();
             return;
         }
-
+        if (!this.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)) {
+            Toast.makeText(this, "你的手机不支持前置摄像", Toast.LENGTH_SHORT).show();
+            nowCameraDirection = Camera.CameraInfo.CAMERA_FACING_BACK;
+        }
+        handler = new MyHandler(tvTime);
         // Create an instance of Camera
-        mCamera = Constant.getCameraInstance(this);
+        mCamera = Constant.getCameraInstance(this, nowCameraDirection);
         params = mCamera.getParameters();
+        params.set("orientation", "portrait");
+        mCamera.setParameters(params);
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
         preview.addView(mPreview);
         mediaRecorder = new MediaRecorder();
-        tvtime.setRotation(-90);
-        changeCamera.setRotation(-90);
-        imgAlbum.setRotation(-90);
 
         changeCamera.setOnClickListener(this);
         imgAlbum.setOnClickListener(this);
@@ -115,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         imgAlbum = (ImageButton) findViewById(R.id.img_album);
         imgBack = (ImageButton) findViewById(R.id.button_back);
         imgRedPoint = (ImageView) findViewById(R.id.img_red);
-        tvtime = (TextView) findViewById(R.id.tvtime);
+        tvTime = (TextView) findViewById(R.id.tvtime);
         preview = (FrameLayout) findViewById(R.id.camera_preview);
     }
 
@@ -139,8 +195,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         releaseCamera();
     }
 
+
     private void releaseCamera() {
         if (mCamera != null) {
+//            mCamera.stopPreview();
             mCamera.release();        // release the camera for other applications
             mCamera = null;
         }
@@ -172,7 +230,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return null;
             }
         }
-
         // Create a media file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.CHINA).format(new Date());
         File mediaFile;
@@ -225,13 +282,74 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void releaseMediaRecorder() {
+
         if (mediaRecorder != null) {
             mediaRecorder.reset();   // clear recorder configuration
             mediaRecorder.release(); // release the recorder object
             mediaRecorder = null;
+            timeThread.stop_();
             mCamera.lock();           // lock camera for later use
         }
     }
+
+    private void changeCamera() {
+        nowCameraDirection = nowCameraDirection ==
+                Camera.CameraInfo.CAMERA_FACING_FRONT ?
+                Camera.CameraInfo.CAMERA_FACING_BACK :
+                Camera.CameraInfo.CAMERA_FACING_FRONT;
+        switchCamera(nowCameraDirection);
+    }
+
+    public void switchCamera(int cameraType) {
+        if (this.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)) {
+            if (Camera.getNumberOfCameras() > cameraType) {
+                // Set selected camera
+                this.nowCameraDirection = cameraType;
+            } else {
+                // Set default camera (Rear)
+                this.nowCameraDirection = Camera.CameraInfo.CAMERA_FACING_BACK;
+            }
+
+            if (mCamera != null) {
+                releaseCamera();
+                mCamera = Constant.getCameraInstance(this, nowCameraDirection);
+                // Destroy previuos Holder
+                mPreview.surfaceDestroyed(mPreview.getHolder());
+                mPreview.getHolder().removeCallback(mPreview);
+                mPreview.destroyDrawingCache();
+                preview.removeView(mPreview);
+                // Remove and re-Add SurfaceView
+
+                mPreview = new CameraPreview(this, mCamera);
+                preview.addView(mPreview);
+
+            }
+        }
+    }
+
+    class TimeThread extends Thread {
+
+        private boolean flag = true;
+
+        @Override
+        public void run() {
+            while (flag) {
+
+                try{
+                    Thread.sleep(1000);
+                }catch (Exception e){}
+
+                Message msg = Message.obtain(handler,1);
+                msg.obj = sdf.format(System.currentTimeMillis() - startTime);
+                msg.sendToTarget();
+            }
+        }
+
+        void stop_() {
+            this.flag = false;
+        }
+    }
+
 
     @Override
     public void onClick(View v) {
@@ -240,10 +358,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startOrStopRecrod();
                 break;
             case R.id.img_album:
-
+                startActivity(new Intent(MainActivity.this,RecordMoveActivity.class));
                 break;
             case R.id.camera_change:
-
+                changeCamera();
                 break;
             case R.id.button_back:
                 finish();
@@ -251,4 +369,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
     }
+
+
 }

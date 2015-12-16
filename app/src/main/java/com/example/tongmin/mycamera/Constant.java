@@ -10,10 +10,17 @@ import android.widget.Toast;
 public class Constant {
 
     /** A safe way to get an instance of the Camera object. */
-    public static Camera getCameraInstance(Context context){
+    public static Camera getCameraInstance(Context context , int direction){
         Camera c = null;
         try {
-            c = Camera.open(); // attempt to get a Camera instance
+            c = Camera.open(direction); // attempt to get a Camera instance
+            if(direction == Camera.CameraInfo.CAMERA_FACING_FRONT){
+                c.setDisplayOrientation(90);
+            }
+            else{
+                c.setDisplayOrientation(90);
+            }
+
         }
         catch (Exception e){
             // Camera is not available (in use or does not exist)
