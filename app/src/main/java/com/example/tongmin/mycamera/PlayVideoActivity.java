@@ -36,6 +36,7 @@ public class PlayVideoActivity extends AppCompatActivity {
                 FrameLayout.LayoutParams.FILL_PARENT,
                 FrameLayout.LayoutParams.FILL_PARENT
         );
+        //试试能不能全屏
         videoView.setLayoutParams(lp);
         videoView.start();
     }
