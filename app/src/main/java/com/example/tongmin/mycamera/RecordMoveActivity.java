@@ -30,6 +30,7 @@ public class RecordMoveActivity extends AppCompatActivity implements AdapterView
         setContentView(R.layout.content_record_move);
         findViewById();
         initView();
+        new LoadFileThread().start();
     }
 
     private void findViewById() {
@@ -45,14 +46,21 @@ public class RecordMoveActivity extends AppCompatActivity implements AdapterView
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent intent = new Intent(RecordMoveActivity.this,PlayVideoActivity.class);
-        intent.putExtra("path",listFile.get(position).getAbsolutePath());
+        intent.putExtra("position", position);
+        ArrayList<String> listFilePath = new ArrayList<String>();
+
+        for(File file : listFile){
+            listFilePath.add(file.getAbsolutePath());
+        }
+
+        intent.putStringArrayListExtra("listPath", listFilePath);
         startActivity(intent);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        new LoadFileThread().start();
+
     }
 
     static class MyHandler extends Handler {

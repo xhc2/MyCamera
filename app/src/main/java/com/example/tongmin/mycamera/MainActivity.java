@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.OrientationEventListener;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long startTime;
     private SimpleDateFormat sdf = new SimpleDateFormat("mm:ss");
     private MyHandler handler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,9 +87,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     static class MyHandler extends Handler {
         TextView tv;
-        MyHandler( TextView tv){
+
+        MyHandler(TextView tv) {
             this.tv = tv;
         }
+
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -147,6 +151,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         handler = new MyHandler(tvTime);
         // Create an instance of Camera
         mCamera = Constant.getCameraInstance(this, nowCameraDirection);
+
+
         params = mCamera.getParameters();
         params.set("orientation", "portrait");
         mCamera.setParameters(params);
@@ -154,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mPreview = new CameraPreview(this, mCamera);
         preview.addView(mPreview);
         mediaRecorder = new MediaRecorder();
+
 
         changeCamera.setOnClickListener(this);
         imgAlbum.setOnClickListener(this);
@@ -251,6 +258,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mediaRecorder = new MediaRecorder();
 
+        int rotation = 0;
+//        if (nowCameraDirection != OrientationEventListener.ORIENTATION_UNKNOWN) {
+
+        if(nowCameraDirection == Camera.CameraInfo.CAMERA_FACING_FRONT){
+            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+            Camera.getCameraInfo(Camera.CameraInfo.CAMERA_FACING_FRONT, cameraInfo);
+            if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+//                rotation = (cameraInfo.orientation - nowCameraDirection + 360) % 360;
+//                rotation = (cameraInfo.orientation - 180 + 360) % 360;
+                mediaRecorder.setOrientationHint(180);
+
+            } else {  // back-facing camera
+            }
+
+        }
+
         // Step 1: Unlock and set camera to MediaRecorder
         mCamera.unlock();
         mediaRecorder.setCamera(mCamera);
@@ -305,15 +328,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (Camera.getNumberOfCameras() > cameraType) {
                 // Set selected camera
                 this.nowCameraDirection = cameraType;
+
             } else {
                 // Set default camera (Rear)
                 this.nowCameraDirection = Camera.CameraInfo.CAMERA_FACING_BACK;
+
+
             }
 
             if (mCamera != null) {
                 releaseCamera();
                 mCamera = Constant.getCameraInstance(this, nowCameraDirection);
                 // Destroy previuos Holder
+
+
                 mPreview.surfaceDestroyed(mPreview.getHolder());
                 mPreview.getHolder().removeCallback(mPreview);
                 mPreview.destroyDrawingCache();
@@ -335,11 +363,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void run() {
             while (flag) {
 
-                try{
+                try {
                     Thread.sleep(1000);
-                }catch (Exception e){}
+                } catch (Exception e) {
+                }
 
-                Message msg = Message.obtain(handler,1);
+                Message msg = Message.obtain(handler, 1);
                 msg.obj = sdf.format(System.currentTimeMillis() - startTime);
                 msg.sendToTarget();
             }
@@ -358,7 +387,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startOrStopRecrod();
                 break;
             case R.id.img_album:
-                startActivity(new Intent(MainActivity.this,RecordMoveActivity.class));
+                startActivity(new Intent(MainActivity.this, RecordMoveActivity.class));
                 break;
             case R.id.camera_change:
                 changeCamera();

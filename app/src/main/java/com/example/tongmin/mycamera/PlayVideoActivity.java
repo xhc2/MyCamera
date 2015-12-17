@@ -3,56 +3,182 @@ package com.example.tongmin.mycamera;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
 import android.view.View;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.RelativeLayout;
-import android.widget.VideoView;
+import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
-public class PlayVideoActivity extends AppCompatActivity {
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+public class PlayVideoActivity extends AppCompatActivity implements View.OnClickListener,
+        MediaPlayer.OnCompletionListener {
 
     private MyVideoView videoView;
-    private String path;
-//    private Button bt;
-    //提交点东西
+    private int position;
+    private ImageButton btLastVideo, btPlayVideo, btNextVideo;
+    private MySeekBar seekBar;
+    private TextView tvWanCheng, tvTime, tvAllTime;
+    private List<String> listPath;
+    private CurrentTimeThread thread;
+    private SimpleDateFormat sdf = new SimpleDateFormat("mm:ss");
+
+    private Handler handler = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            tvTime.setText(sdf.format(videoView.getCurrentPosition()));
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.content_play_video);
-        videoView = (MyVideoView)findViewById(R.id.videoview);
-//        bt = (Button)findViewById(R.id.bt);
-        Intent intent = getIntent();
-        path = intent.getStringExtra("path");
-        videoView.setVideoPath(path);
-        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
+        findViewById();
+        initView();
 
-            }
-        });
-        videoView.start();
-//        bt.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                DisplayMetrics metrics = new DisplayMetrics(); getWindowManager().getDefaultDisplay().getMetrics(metrics);
-//                android.widget.FrameLayout.LayoutParams params = (android.widget.FrameLayout.LayoutParams) videoView.getLayoutParams();
-//                params.width =  metrics.widthPixels;
-//                params.height = metrics.heightPixels;
-//                params.leftMargin = 0;
-//                videoView.setLayoutParams(params);
-//                //试试能不能全屏
-//
-//            }
-//        });
+    }
+
+    private void findViewById() {
+        videoView = (MyVideoView) findViewById(R.id.videoview);
+        btLastVideo = (ImageButton) findViewById(R.id.last);
+        btPlayVideo = (ImageButton) findViewById(R.id.play);
+        btNextVideo = (ImageButton) findViewById(R.id.next);
+
+        seekBar = (MySeekBar) findViewById(R.id.seekbar);
+        tvWanCheng = (TextView) findViewById(R.id.wancheng);
+        tvTime = (TextView) findViewById(R.id.time);
+        tvAllTime = (TextView) findViewById(R.id.all_time);
+
+        btNextVideo.setRotation(-90);
+        btLastVideo.setRotation(-90);
+        btPlayVideo.setRotation(-90);
+
+//        seekBar.setRotation(180);
+        tvWanCheng.setRotation(-90);
+        tvTime.setRotation(-90);
+        tvAllTime.setRotation(-90);
+
+        btLastVideo.setOnClickListener(this);
+        btPlayVideo.setOnClickListener(this);
+        btNextVideo.setOnClickListener(this);
+
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        next();
     }
 
 
+    private void initView() {
+
+        Intent intent = getIntent();
+        position = intent.getIntExtra("position", 0);
+        listPath = intent.getStringArrayListExtra("listPath");
+        videoView.setVideoPath(listPath.get(position));
+        videoView.setOnCompletionListener(this);
+        play();
+    }
+
+    private void next() {
+        if (position < listPath.size() - 1) {
+            position++;
+            videoView.setVideoPath(listPath.get(position));
+            play();
+
+        } else {
+            pause();
+        }
+
+    }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onDestroy() {
+        super.onDestroy();
+        if (thread != null) {
+            thread.stop_();
+        }
+    }
 
+    private void pause() {
+        videoView.pause();
+        btPlayVideo.setImageResource(R.drawable.playvideo);
+    }
+
+    private void play() {
+        if (thread != null) {
+            thread.stop_();
+        }
+        videoView.start();
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                tvAllTime.setText(sdf.format(videoView.getDuration()) );
+            }
+        });
+        btPlayVideo.setImageResource(R.drawable.stopvideo);
+        thread = new CurrentTimeThread();
+        thread.start();
+
+    }
+
+    private void last() {
+        if (position > 0) {
+            position--;
+        }
+        videoView.setVideoPath(listPath.get(position));
+        play();
+    }
+
+    class CurrentTimeThread extends Thread {
+        private boolean flag = true;
+
+        void stop_() {
+            this.flag = false;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            while (flag) {
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+
+                }
+                handler.sendEmptyMessage(1);
+            }
+
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.last:
+                last();
+                break;
+            case R.id.play:
+                if (videoView.isPlaying()) {
+                    pause();
+                } else {
+                    play();
+                }
+                break;
+            case R.id.next:
+                next();
+                break;
+        }
     }
 }
