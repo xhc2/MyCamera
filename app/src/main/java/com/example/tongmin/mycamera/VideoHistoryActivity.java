@@ -6,10 +6,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
@@ -18,7 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RecordMoveActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
+public class VideoHistoryActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
 
     private GridView gridView;
     private List<File> listFile;
@@ -45,7 +42,7 @@ public class RecordMoveActivity extends AppCompatActivity implements AdapterView
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Intent intent = new Intent(RecordMoveActivity.this,PlayVideoActivity.class);
+        Intent intent = new Intent(VideoHistoryActivity.this,PlayVideoActivity.class);
         intent.putExtra("position", position);
         ArrayList<String> listFilePath = new ArrayList<String>();
 

@@ -4,13 +4,10 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Toast;
 
 /**
  * Created by TongMin on 2015/12/17.
@@ -41,8 +38,8 @@ public class MySeekBar extends View {
         paint = new Paint();
         mPaint = new Paint();
 //        paint.setColor(Color.parseColor("#000000"));
-        paint.setColor(Color.parseColor("#B2B2C4"));
-        mPaint.setColor(Color.parseColor("#ffffff"));
+        paint.setColor(Color.parseColor("#2D2C34"));
+        mPaint.setColor(Color.parseColor("#B3B1C6"));
 
 
     }
@@ -84,17 +81,19 @@ public class MySeekBar extends View {
             case MotionEvent.ACTION_DOWN:
                 downX = (int) event.getX();
                 downY = (int) event.getY();
-                changePosition(downY , false);
+                changePosition(downY , true);
                 break;
             case MotionEvent.ACTION_MOVE:
                 moveX = (int) event.getX();
                 moveY = (int) event.getY();
                 if (Math.abs(moveY - downY) > 10) {
-                    changePosition(moveY , false);
+                    changePosition(moveY , true);
 
                 }
                 break;
             case MotionEvent.ACTION_UP:
+
+                changePosition((int) event.getY() , false);
                 break;
         }
         return true;
@@ -105,7 +104,7 @@ public class MySeekBar extends View {
 //flag 标志是否回调 true回调 -1，false回调 正常值 避免递归导致栈溢出
     private void changePosition(int value , boolean flag ) {
 
-        rect.set(viewLeft + barWidth, value, viewRight - barWidth, viewBottom);
+        rect.set(barWidth, value, 2*barWidth, viewBottom);
         circle.setPointY(value);
         if (changeLinstener != null && !flag) {
             changeLinstener.changeValue((float)((getHeight() * 1.0 - value *1.0) / getHeight()*1.0));
@@ -124,10 +123,10 @@ public class MySeekBar extends View {
             circle.setR(getWidth() / 2);
 
         }
-        if (circle.getPointY() < viewTop + circle.getR()) {
-            circle.setPointY(viewTop + circle.getR());
-        } else if (circle.getPointY() > viewBottom - circle.getR()) {
-            circle.setPointY(viewBottom - circle.getR());
+        if (circle.getPointY() <circle.getR()) {
+            circle.setPointY(circle.getR());
+        } else if (circle.getPointY() > getHeight() - circle.getR()) {
+            circle.setPointY( getHeight() - circle.getR());
         }
         canvas.drawCircle(circle.getPointX(), circle.getPointY(), circle.getR(), mPaint);
     }
@@ -141,10 +140,8 @@ public class MySeekBar extends View {
         viewTop = getTop();
         viewBottom = getBottom();
         viewRight = getRight();
-
-        rectBar.set(viewLeft + barWidth, viewTop, viewLeft + 2 * barWidth, barHeight);
-
-        canvas.drawRoundRect(rectBar, 100, 100, paint);
+        rectBar.set(barWidth, 0, 2 * barWidth, barHeight);
+        canvas.drawRoundRect(rectBar, 10, 10, paint);
     }
 
     public interface OnChangeLinstener {
@@ -156,7 +153,7 @@ public class MySeekBar extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         drawBar(canvas);
-        canvas.drawRoundRect(rect, 100, 100, mPaint);
         drawCircle(canvas);
+        canvas.drawRoundRect(rect, 10, 10, mPaint);
     }
 }

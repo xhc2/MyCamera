@@ -9,16 +9,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class PlayVideoActivity extends AppCompatActivity implements View.OnClickListener,
-        MediaPlayer.OnCompletionListener {
+        MediaPlayer.OnCompletionListener, MySeekBar.OnChangeLinstener {
 
     private MyVideoView videoView;
     private int position;
@@ -35,6 +32,7 @@ public class PlayVideoActivity extends AppCompatActivity implements View.OnClick
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             tvTime.setText(sdf.format(videoView.getCurrentPosition()));
+            seekBar.setCurrent(videoView.getCurrentPosition());
         }
     };
 
@@ -59,12 +57,10 @@ public class PlayVideoActivity extends AppCompatActivity implements View.OnClick
         tvWanCheng = (TextView) findViewById(R.id.wancheng);
         tvTime = (TextView) findViewById(R.id.time);
         tvAllTime = (TextView) findViewById(R.id.all_time);
-
         btNextVideo.setRotation(-90);
         btLastVideo.setRotation(-90);
         btPlayVideo.setRotation(-90);
 
-//        seekBar.setRotation(180);
         tvWanCheng.setRotation(-90);
         tvTime.setRotation(-90);
         tvAllTime.setRotation(-90);
@@ -73,6 +69,13 @@ public class PlayVideoActivity extends AppCompatActivity implements View.OnClick
         btPlayVideo.setOnClickListener(this);
         btNextVideo.setOnClickListener(this);
 
+    }
+
+    @Override
+    public void changeValue(float ratio) {
+        if(ratio == -1){return;}
+        videoView.seekTo((int) (videoView.getDuration() * ratio));
+        tvTime.setText(sdf.format(videoView.getCurrentPosition()));
     }
 
     @Override
@@ -88,6 +91,7 @@ public class PlayVideoActivity extends AppCompatActivity implements View.OnClick
         listPath = intent.getStringArrayListExtra("listPath");
         videoView.setVideoPath(listPath.get(position));
         videoView.setOnCompletionListener(this);
+        seekBar.setChangeLinstener(this);
         play();
     }
 
@@ -124,7 +128,8 @@ public class PlayVideoActivity extends AppCompatActivity implements View.OnClick
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                tvAllTime.setText(sdf.format(videoView.getDuration()) );
+                tvAllTime.setText(sdf.format(videoView.getDuration()));
+                seekBar.setMax(videoView.getDuration());
             }
         });
         btPlayVideo.setImageResource(R.drawable.stopvideo);

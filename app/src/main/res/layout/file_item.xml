@@ -7,8 +7,7 @@
     <ImageView
         android:id="@+id/img_file"
         android:layout_width="100dp"
-        android:scaleType="fitXY"
-        android:background="#000000"
+        android:scaleType="centerCrop"
         android:layout_height="100dp"
         />
 

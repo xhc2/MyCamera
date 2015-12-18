@@ -29,6 +29,7 @@
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:src="@drawable/gallery_default" />
